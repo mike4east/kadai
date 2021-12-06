@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>PASSMAKER</title>
+<script src="js/jquery-2.1.3.min.js"></script>
+<link rel="stylesheet" href="css/sample.css">
+</head>
+<body>
+<header>
+<img src="img/low_poly_network_communications_background_1702.jpg" id="main_img" alt="pass_main_img">
+<h1>My passwords</h1>
+</header>
+<main>
+
+  <h2>保存済みパスワード</h2>
+
+  <table id="listed">
+    <!-- ここに追加データが挿入される -->
+  </table>
+
+
+  
+  <h2>新規パスワード作成</h2>
+
+  <form name="inputs" class="inputs">
+    <dl>
+      <dt>Title</dt>
+      <dd>
+            <input type="text" id="key" checked>
+      </dd>
+
+
+
+      <dt>Include...</dt>
+      <dd>
+        <ul>
+          <li>
+            <input type="checkbox" id="includeNumber" checked>
+            <label for="includeNumber">数字</label>
+          </li>
+
+          <li>
+            <input type="checkbox" id="includeEnglishLowercase">
+            <label for="includeEnglishLowercase">英語の小文字</label>
+          </li>
+
+          <li>
+            <input type="checkbox" id="includeEnglishUppercase">
+            <label for="includeEnglishUppercase">英語の大文字</label>
+          </li>
+        </ul>
+      </dd>
+
+
+      <dt>Number of letters</dt>
+      <dd>
+        <ul>
+          <li>
+            <input type="radio" name="stringLength" id="four" value="4" checked>
+            <label for="four">4文字</label>
+          </li>
+
+          <li>
+            <input type="radio" name="stringLength" id="eight" value="8">
+            <label for="eight">８文字</label>
+          </li>
+
+          <li>
+            <input type="radio" name="stringLength" id="twelve" value="12">
+            <label for="twelve">１２文字</label>
+          </li>
+
+          <li>
+            <input type="radio" name="stringLength" id="custom" value="custom">
+            <label for="custom">カスタム</label>
+            <input id="customLength" type="number" min="1" max="100" placeholder="1~100">
+          </li>
+        </ul>
+      </dd>
+
+
+      <dt>Number of passwords</dt>
+      <dd>
+        <ul>
+          <li>
+            <input type="radio" name="numberOfPasswords" id="onePassword" value="1" checked>
+            <label for="onePassword">１個</label>
+          </li>
+
+          <li>
+            <input type="radio" name="numberOfPasswords" id="custonNumberOfPasswords" value="custom">
+            <label for="custonNumberOfPasswords">カスタム</label>
+            <input id="custonNumberOfPasswordsInput" type="number" min="1" max="100" placeholder="1~100">
+          </li>
+        </ul>
+      </dd>
+
+      <dt>除外する文字（半角カンマ区切り）</dt>
+      <dd>
+        <input type="text" id="excludeTexts">
+      </dd>
+    </dl>
+    <button id="generateButton">パスワードを生成する</button>
+    <button id="saveButton">パスワードを保存する</button>
+
+    <div class="clearbtn">
+    <button id="clear">全てのパスワードをクリア</button>
+    </div>
+  </form>
+
+
+    <ul id="passwordList"></ul>
+
+
+
+  </main>
+
+
+    <script>
+    const baseExcludesTexts = ['o', 'O', '0', 'I', 'l', '1'];
+    document.getElementById('excludeTexts').value = baseExcludesTexts.join(',');
+
+    const inputs = document.forms.inputs,
+    passwordListElement = document.getElementById('passwordList');
+
+    document.getElementById('generateButton').addEventListener('click', e => {
+    e.preventDefault();
+
+  const isIncludeEnglishLowercase = inputs.includeEnglishLowercase.checked,
+        isIncludeEnglishUppercase = inputs.includeEnglishUppercase.checked,
+        isIncludeNumber = inputs.includeNumber.checked;
+
+  if (isIncludeEnglishLowercase || isIncludeEnglishUppercase || isIncludeNumber) {
+
+
+    
+    // パスワードを生成する為の配列を作る
+    const passwordTexts = [];
+
+    if (isIncludeEnglishLowercase) {
+      for (let i = 0; i < 26; i++) {
+        passwordTexts.push(String.fromCharCode('a'.charCodeAt(0) + i))
+      }
+    }
+
+    if (isIncludeEnglishUppercase) {
+      for (let i = 0; i < 26; i++) {
+        passwordTexts.push(String.fromCharCode('A'.charCodeAt(0) + i))
+      }
+    }
+
+    if (isIncludeNumber) {
+      for (let i = 0; i < 10; i++) {
+        passwordTexts.push(i)
+      }
+    }
+
+
+    const excludeTexts = inputs.excludeTexts.value.split(','),
+          excludedpasswordTexts = passwordTexts.filter(text => !(excludeTexts.includes(String(text))));
+
+    let passwordLength = inputs.stringLength.value,
+        isOutOfRange = false;
+    if (passwordLength === 'custom') {
+      passwordLength = inputs.customLength.value;
+      if (passwordLength < 1 || passwordLength > 100) {
+        alert('文字数は１〜１００の中で設定してください')
+        isOutOfRange = true;
+      }
+    } else {
+      passwordLength = Number(passwordLength)
+    }
+
+    let numberOfPasswords = inputs.numberOfPasswords.value;
+    if (numberOfPasswords === 'custom') {
+      numberOfPasswords = inputs.custonNumberOfPasswordsInput.value;
+      if (numberOfPasswords < 1 || numberOfPasswords > 100) {
+        alert('生成するパスワードの個数は１〜１００の中で設定してください')
+        isOutOfRange = true;
+      }
+    } else {
+      numberOfPasswords = Number(numberOfPasswords)
+    }
+
+    if (!isOutOfRange) {
+      passwordListElement.innerHTML = '';
+      for (let i = 0; i < numberOfPasswords; i++) {
+        let passwords = '';
+        for (let j = 0; j < passwordLength; j++) {
+          passwords += excludedpasswordTexts[Math.floor(Math.random() * excludedpasswordTexts.length)];
+        }
+        const li = document.createElement('li'),
+              input = document.createElement('input'),
+              addButton = document.createElement('a');
+        input.value = passwords;
+        li.appendChild(input);
+        input.id = 'lvalue';
+
+        addButton.textContent = 'コピーする';
+        addButton.classList.add('addButton');
+        addButton.addEventListener('click', () => {
+          const textarea = document.createElement('textarea');
+          textarea.textContent = passwords;
+
+          const body = document.querySelector('body');
+          body.appendChild(textarea);
+
+          textarea.select();
+          document.execCommand('copy');
+          body.removeChild(textarea);
+
+          alert(`パスワード「${passwords}」をコピーしました！`)
+
+        })
+        li.appendChild(addButton);
+
+        passwordListElement.appendChild(li);
+      }
+    }
+
+          
+
+  } else {
+    alert(`「パスワードを構成する文字」には、少なくとも１つ以上の項目にチェックを入れてください）`)
+  }
+
+})
+
+$('#saveButton').on('click',function(){
+         const key = $('#key').val();
+         const localvalue = $('#lvalue').val();
+         localStorage.setItem(key, localvalue)
+         const html = '<tr><th>'+key+'</th><td>'+value+'</td></tr>';
+    $("#listed").append(html);
+});  
+
+
+//2.clear クリックイベント
+$('#clear').on('click',function(){
+    localStorage.clear();
+    $('#list').empty();
+})
+
+//3.ページ読み込み：保存データ取得表示
+for (let i=0; i<localStorage.length; i++){
+    const key = localStorage.key(i);
+    const value = localStorage.getItem(key);
+    const html = '<tr><th>'+key+'</th><td>'+value+'</td></tr>'; $("#listed").append(html);
+}
+
+</script>
+
+
+
+<footer><small>G's</small></footer>
+</body>
+</html>
